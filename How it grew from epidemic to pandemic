@@ -1,0 +1,10 @@
+# Loading the readr, ggplot2, and dplyr packages
+library(readr) #
+library(ggplot2)
+library(dplyr)
+
+# Read worldwide_aggregate.csv into confirmed_cases_worldwide
+confirmed_cases_worldwide <- read_csv('worldwide_aggregate.csv') #dataset extracted from https://datahub.io/core/covid-19/r/7.html
+
+# See the result
+confirmed_cases_worldwide
