@@ -5,7 +5,7 @@ library(ggplot2) # contains methods for visualising datasets in double-axes grap
 library(dplyr) # contains methods for manupulating data stored in data frames
 
 # Read countries_aggregate.csv into confirmed_cases_worldwide
-confirmed_cases_worldwide <- read_csv('countries_aggregate.csv') #dataset extracted from https://datahub.io/core/covid-19/r/countries-aggregated.csv
+confirmed_cases_worldwide <- read_csv('C:/Users/DELL/Downloads/countries-aggregated_csv.csv') #dataset extracted from https://datahub.io/core/covid-19/r/countries-aggregated.csv
 
 # See the resulting dataframe
 confirmed_cases_worldwide
@@ -14,16 +14,16 @@ confirmed_cases_worldwide
 # Using ggplot to visualise the rise
 # Drawing a line plot of cumulative cases vs. date
 # Labelling the y-axis that numeric value
-ggplot(confirmed_cases_worldwide, aes(date, cum_cases)) +
-  geom_line() +
+ggplot(confirmed_cases_worldwide, aes(Date, Confirmed, group=Country, color=Country)) +
+  geom_line() + theme(legend.position='None')+
   ylab("Cumulative confirmed cases")
   
 # Be sure to notice the trends during late February and early March
 
 # STEP 3
 # It is a well-known fact that COVID-19 originated from China, so let's analyse the trends of outbreak of the virus in China vs. the World
-# Read in key_countries_pivoted.csv and filter for China (note to author, add filerting parameter)
-confirmed_cases_china_vs_world <- read_csv('countries_aggregate.csv')
+# Read in key_countries_pivoted.csv and filter for China
+confirmed_cases_china_vs_world <- confirmed_cases_worldwide %>% filter(Country == "China")
 
 # See the result
 confirmed_cases_china_vs_world
@@ -32,7 +32,7 @@ confirmed_cases_china_vs_world
 # Define aesthetics within the line geom
 plt_cum_confirmed_cases_china_vs_world <- 
   ggplot(confirmed_cases_china_vs_world) +
-  geom_line(aes(date, cum_cases, group = is_china, color = is_china)) +
+  geom_line(aes(Date, Confirmed, group = Country, color = Country)) +
   ylab("Cumulative confirmed cases")
 
 # See the plot
@@ -60,23 +60,22 @@ plt_cum_confirmed_cases_china_vs_world +
 # Adding a trend line to understand there was an increase/decrease in cases reported in China
 # Filter for China, from Feb 15
 china_after_feb15 <- confirmed_cases_china_vs_world %>%
-  filter(is_china == "China" , date >= "2020-02-15")
+  filter(Country == "China" , Date >= "2020-02-15")
 
 # Using china_after_feb15, draw a line plot cum_cases vs. date
 # Add a smooth trend line using linear regression, no error bars
-ggplot(china_after_feb15, aes(date, cum_cases)) +
+ggplot(china_after_feb15, aes(Date, Confirmed)) +
   geom_line() +
   geom_smooth(method = "lm", se = FALSE) +
   ylab("Cumulative confirmed cases")
   
 # STEP 6
 # Filter confirmed_cases_china_vs_world for not China
-not_china <- confirmed_cases_china_vs_world %>% filter(is_china != "China") 
-# Author's note: need to modify the dataset here.
+not_china <- confirmed_cases_worldwide %>% filter(Country != "China")  
 
 # Using not_china, draw a line plot cum_cases vs. date
 # Add a smooth trend line using linear regression, no error bars
-plt_not_china_trend_lin <- ggplot(not_china, aes(date, cum_cases)) +
+plt_not_china_trend_lin <- ggplot(not_china, aes(Date, Confirmed, group = Country)) +
   geom_line() +
   geom_smooth(method = "lm", se = FALSE) +
   ylab("Cumulative confirmed cases")
@@ -93,13 +92,12 @@ plt_not_china_trend_lin +
 # STEP 8
 # The global trend can be closely compared to the trend observed in China, the closer it fits, the more accurate and easier it is to analyse. Apply this trend to identify countries other than China that have been hardly hit by the virus
 # Run this to get the data for each country
-confirmed_cases_by_country <- read_csv("datasets/confirmed_cases_by_country.csv")
-glimpse(confirmed_cases_by_country) #note to author to update dataset
+glimpse(confirmed_cases_worldwide) 
 
 # Group by country, summarize to calculate total cases, find the top 7
-top_countries_by_total_cases <- confirmed_cases_by_country %>%
-  group_by(country) %>%
-  summarize(total_cases = max(cum_cases)) %>%
+top_countries_by_total_cases <- confirmed_cases_worldwide %>%
+  group_by(Country) %>%
+  summarize(total_cases = max(Confirmed)) %>%
   top_n(total_cases, n=7)
 
 # See the result
@@ -108,13 +106,15 @@ top_countries_by_total_cases
 # STEP 9
 # Plotting hardest hit countries as of Mid-March 2020
 # Run this to get the data for the top 7 countries
-confirmed_cases_top7_outside_china <- read_csv('datasets/confirmed_cases_top7_outside_china.csv')
+confirmed_cases_top7_outside_china <- not_china %>%
+  filter(Date >= "2020-03-15")%>% group_by(Country)%>%
+  top_n(Confirmed, n=7)
 
 # glimpse the datsets
 glimpse(confirmed_cases_top7_outside_china)
 
 # Using confirmed_cases_top7_outside_china, draw a line plot of
 # cum_cases vs. date, grouped and colored by country
-ggplot(confirmed_cases_top7_outside_china, aes(date, cum_cases, group = country, color = country))+
-geom_line()+
+ggplot(confirmed_cases_top7_outside_china, aes(x= Country, y= Confirmed, fill = Country))+
+geom_point(aes(color = Country))+ scale_y_log10()+ theme(legend.position='None')+
 ylab("Cumulative confirmed cases")
